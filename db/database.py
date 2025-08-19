@@ -10,7 +10,7 @@ from loguru import logger
 from core.config import settings
 
 class MongoDB():
-    client: Optional[AsyncIOMotorClient] = None # type: ignore
+    client: Optional[AsyncIOMotorClient] = None
 
 mongodb = MongoDB()
 
