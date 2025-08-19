@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from loguru import logger
 
 
 from core.config import settings
-from db.database import mongo_startup
+from api.routes import router as api_router
+from db.database import create_start_app_handler, create_stop_app_handler
+
 
 def get_application():
     application = FastAPI(
@@ -12,7 +15,10 @@ def get_application():
         docs_url='/docs',
     )
 
-    application.add_event_handler('startup', mongo_startup(application))
+    application.add_event_handler('startup', create_start_app_handler(application))
+    application.add_event_handler('shutdown', create_stop_app_handler(application))
+
+    application.include_router(api_router)
 
 
     application.add_middleware(
@@ -22,6 +28,8 @@ def get_application():
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    logger.info('App Startup Success')
 
     return application
 
