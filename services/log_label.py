@@ -1,6 +1,6 @@
 import re
 import json
-
+from .clean_message import clean_log_message
 
 class LogLabeler:
     def __init__(self, patterns=None):
@@ -647,5 +647,6 @@ class LogLabeler:
 
 def get_label_log(msg):
     loglabel = LogLabeler()
-    label, data = loglabel.label_log_by_regex(log_line=msg)
+    cln_msg = clean_log_message(msg=msg)
+    label, data = loglabel.label_log_by_regex(log_line=cln_msg)
     return label, data

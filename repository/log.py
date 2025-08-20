@@ -15,6 +15,7 @@ class LogRepository(DatabaseRepository):
                         '$dateToString': {
                             'format': '%Y-%m-%d',
                             'date': '$timestamp',
+                            'timezone': '+07:00'
                         }
                     }
                 }

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import List, Any
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from loguru import logger
 
 from core.dependencies import ( get_log_repo )
@@ -8,6 +9,8 @@ from repository.log import LogRepository
 import helper.check_exist_file as file_helper
 import helper.pipeline_create as date_pipeline_helper
 import helper.save_log_file as save_log
+
+from services import sys_sta
 
 router = APIRouter()
 dates_lst: List[str] = []
@@ -26,12 +29,15 @@ async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
     # data_lst: List[Any] = []
     format_date = '%Y-%m-%d'
 
-    print(missing_dates)
+    # print(missing_dates)
 
     if missing_dates is None or len(missing_dates) == 0:
         return None
     
-    if (datetime.strptime(day, format_date) == datetime.today().date() for day in missing_dates):
+    # if (datetime.strptime(day, format_date) == datetime.today().date() for day in missing_dates):
+    #     missing_dates.remove(str(datetime.today().date()))
+
+    if (str(datetime.today().date()) in missing_dates):
         missing_dates.remove(str(datetime.today().date()))
     
     if len(missing_dates) == 1:
@@ -53,8 +59,24 @@ async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
         data = await log_repo.get_data(pipeline_custom=pipeline)
 
         # data_lst.append(data)
-    print(len(data))
+    # print(len(data))
     save_log.export_log(data)
     return True
 
-# @app.get('/system-status')
+@router.get('/system-status')
+async def system_status(log_repo: LogRepository = Depends(get_log_repo)):
+    # last_time = datetime.now()
+    last_time_utc = datetime(2025, 5, 14,  16, 59, 59, tzinfo=timezone.utc)
+    last_time_local = last_time_utc + timedelta(hours=7)
+    start_date = date_pipeline_helper.start_of_day(last_time_local)
+
+    pipeline = date_pipeline_helper.data_pipeline_from_to(start_date, last_time_local)
+
+    data = await log_repo.get_data(pipeline_custom=pipeline)
+
+    # print(data)
+
+    system_data_today = await sys_sta.compute_system_status(data)
+
+    print(system_data_today)
+    return system_data_today

@@ -26,8 +26,8 @@ def export_log(datas):
         ws.append(headers)
 
         for value in values:
-            clean_msg = clean_message.clean_log_message(value.get('message', ''))
-            label, data_extracted = log_label.get_label_log(clean_msg)
+            # clean_msg = clean_message.clean_log_message(value.get('message', ''))
+            label, data_extracted = log_label.get_label_log(value.get('message', ''))
 
             ws.append([
                 str(value['_id']),
