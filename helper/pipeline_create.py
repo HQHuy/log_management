@@ -1,19 +1,22 @@
 from datetime import datetime, timedelta, timezone
 
-def convert_timezon_to_utc(time: datetime):
-    return time.astimezone(timezone.utc)
+# def convert_timezon_to_utc(time: datetime):
+#     return time.astimezone(timezone.utc)
 
-def one_day_time(day_utc: datetime):
-    start = day_utc.replace(hour=0, minute=0, second=0, microsecond=000000)
+def hour_ago(day: datetime):
+    return day - timedelta(hours=1)
+
+def one_day_time(day: datetime):
+    start = day.replace(hour=0, minute=0, second=0, microsecond=000000)
     end = start + timedelta(days=1)
 
     return start, end
 
-def start_of_day(day_utc: datetime):
-    return day_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+def start_of_day(day: datetime):
+    return day.replace(hour=0, minute=0, second=0, microsecond=0)
 
-def end_of_day(day_utc: datetime):
-    return day_utc.replace(hour=23, minute=59, second=59,microsecond=999000)
+# def end_of_day(day: datetime):
+#     return day.replace(hour=23, minute=59, second=59,microsecond=999000)
 
 def data_pipeline_from_to(start, end):
     pipeline = [
@@ -26,3 +29,5 @@ def data_pipeline_from_to(start, end):
     ]
 
     return pipeline
+
+def data_

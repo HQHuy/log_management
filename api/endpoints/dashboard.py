@@ -9,8 +9,10 @@ from repository.log import LogRepository
 import helper.check_exist_file as file_helper
 import helper.pipeline_create as date_pipeline_helper
 import helper.save_log_file as save_log
+TIME_DEMO = datetime(2025, 5, 14,  4, 59, 59, tzinfo=timezone.utc)
 
 from services import sys_sta
+from services import key_metric
 
 router = APIRouter()
 dates_lst: List[str] = []
@@ -19,12 +21,12 @@ dates_lst: List[str] = []
 async def collect_date(log_repo: LogRepository = Depends(get_log_repo)):
     
     result = await log_repo.get_date_from_db()
-    # print(result)
+    dates_lst = result
     return result
 
 @router.get('/download/data-by-date')
 async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
-    dates_exist = await log_repo.get_date_from_db()
+    dates_exist = dates_lst
     missing_dates = file_helper.missing_dates(dates_exist)
     # data_lst: List[Any] = []
     format_date = '%Y-%m-%d'
@@ -66,8 +68,7 @@ async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
 @router.get('/system-status')
 async def system_status(log_repo: LogRepository = Depends(get_log_repo)):
     # last_time = datetime.now()
-    last_time_utc = datetime(2025, 5, 14,  16, 59, 59, tzinfo=timezone.utc)
-    last_time_local = last_time_utc + timedelta(hours=7)
+    last_time_local = TIME_DEMO.astimezone(timezone(timedelta(hours=7))) 
     start_date = date_pipeline_helper.start_of_day(last_time_local)
 
     pipeline = date_pipeline_helper.data_pipeline_from_to(start_date, last_time_local)
@@ -80,3 +81,25 @@ async def system_status(log_repo: LogRepository = Depends(get_log_repo)):
 
     print(system_data_today)
     return system_data_today
+
+@router.get('/key-metrics')
+async def key_metrics_1_hour(log_repo: LogRepository = Depends(get_log_repo)):
+    last_time_local = TIME_DEMO.astimezone(timezone(timedelta(hours=7))) 
+    start_time1 = date_pipeline_helper.hour_ago(last_time_local)
+
+    end_time2 = start_time1
+    start_time2 = date_pipeline_helper.hour_ago(start_time1)
+
+    print(start_time1, last_time_local)
+    print(start_time2, end_time2)
+
+    pipeline = date_pipeline_helper.data_pipeline_from_to(start_time1, last_time_local)
+    pipeline2 = date_pipeline_helper.data_pipeline_from_to(start_time2, end_time2)
+
+    data1 = await log_repo.get_data(pipeline_custom=pipeline)
+    data2 = await log_repo.get_data(pipeline_custom=pipeline2)
+
+    print(len(data1))
+    print(len(data2))
+    await key_metric.compute_key_metrics(docs_now=data1, docs_prev=data2)
+    # key_metrics = await key_metric.compute_key_metrics(docs_now=data1, docs_prev=data2)

@@ -1,11 +1,13 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from datetime import datetime, tzinfo
+from datetime import datetime
 from loguru import logger
 
 from .endpoints import dashboard as dashboard_rou
+from .endpoints import data as data_rou
 
 router = APIRouter()
+
 
 @router.get('/api/check')
 def health_check():
@@ -26,3 +28,4 @@ def health_check():
     
     
 router.include_router(dashboard_rou.router, tags=['dashboard'], prefix='/dashboard')
+router.include_router(data_rou.router, tags=['data'], prefix='/data')
