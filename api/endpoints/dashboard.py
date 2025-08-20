@@ -1,21 +1,60 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
-import json
+from typing import List, Any
+from datetime import datetime
 from loguru import logger
 
 from core.dependencies import ( get_log_repo )
-from repository.log_repo import LogRepository
+from repository.log import LogRepository
+import helper.check_exist_file as file_helper
+import helper.pipeline_create as date_pipeline_helper
+import helper.save_log_file as save_log
 
 router = APIRouter()
-
+dates_lst: List[str] = []
 
 @router.get('/data-collection/date')
 async def collect_date(log_repo: LogRepository = Depends(get_log_repo)):
     
-    result = await log_repo.get_date()
+    result = await log_repo.get_date_from_db()
+    # print(result)
     return result
 
 @router.get('/download/data-by-date')
 async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
-    result = await log_repo.save_data()
-    return result
+    dates_exist = await log_repo.get_date_from_db()
+    missing_dates = file_helper.missing_dates(dates_exist)
+    # data_lst: List[Any] = []
+    format_date = '%Y-%m-%d'
+
+    print(missing_dates)
+
+    if missing_dates is None or len(missing_dates) == 0:
+        return None
+    
+    if (datetime.strptime(day, format_date) == datetime.today().date() for day in missing_dates):
+        missing_dates.remove(str(datetime.today().date()))
+    
+    if len(missing_dates) == 1:
+        date = datetime.strptime(missing_dates[0], format_date)
+        start, end = date_pipeline_helper.one_day_time(date)
+
+        pipeline = date_pipeline_helper.data_pipeline_from_to(start, end)
+
+        data = await log_repo.get_data(pipeline_custom=pipeline)
+        
+        # data_lst.append(data)
+        
+    else:
+        start_date = datetime.strptime(missing_dates[-1], format_date)
+        end_date = datetime.strptime(missing_dates[0], format_date)
+
+        pipeline = date_pipeline_helper.data_pipeline_from_to(start_date, end_date)
+
+        data = await log_repo.get_data(pipeline_custom=pipeline)
+
+        # data_lst.append(data)
+    print(len(data))
+    save_log.export_log(data)
+    return True
+
+# @app.get('/system-status')

@@ -643,3 +643,9 @@ class LogLabeler:
 
         else:
             return label, {'message': match.group(0)}
+        
+
+def get_label_log(msg):
+    loglabel = LogLabeler()
+    label, data = loglabel.label_log_by_regex(log_line=msg)
+    return label, data
