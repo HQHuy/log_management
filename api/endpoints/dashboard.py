@@ -9,10 +9,10 @@ from repository.log import LogRepository
 import helper.check_exist_file as file_helper
 import helper.pipeline_create as date_pipeline_helper
 import helper.save_log_file as save_log
-TIME_DEMO = datetime(2025, 5, 14,  4, 59, 59, tzinfo=timezone.utc)
+TIME_DEMO = datetime(2025, 5, 14,  8, 59, 59, tzinfo=timezone.utc)
 
 from services import sys_sta
-from services import key_metric
+from services import key_metric as metrics_key
 
 router = APIRouter()
 dates_lst: List[str] = []
@@ -71,35 +71,32 @@ async def system_status(log_repo: LogRepository = Depends(get_log_repo)):
     last_time_local = TIME_DEMO.astimezone(timezone(timedelta(hours=7))) 
     start_date = date_pipeline_helper.start_of_day(last_time_local)
 
-    pipeline = date_pipeline_helper.data_pipeline_from_to(start_date, last_time_local)
+    query = date_pipeline_helper.data_query_find_from_to(start_date, last_time_local)
 
-    data = await log_repo.get_data(pipeline_custom=pipeline)
+    data = await log_repo.get_data_find(query)
 
-    # print(data)
+    # print(data[0]) 
 
-    system_data_today = await sys_sta.compute_system_status(data)
-
-    print(system_data_today)
-    return system_data_today
+    result = await sys_sta.compute_system_status(data)
+    return result
 
 @router.get('/key-metrics')
-async def key_metrics_1_hour(log_repo: LogRepository = Depends(get_log_repo)):
-    last_time_local = TIME_DEMO.astimezone(timezone(timedelta(hours=7))) 
-    start_time1 = date_pipeline_helper.hour_ago(last_time_local)
+async def key_metrics(log_repo: LogRepository = Depends(get_log_repo)):
+    end_now = TIME_DEMO.astimezone(timezone(timedelta(hours=7)))
+    start_now = date_pipeline_helper.time_ago(end_now, unit='hours', num=1)
 
-    end_time2 = start_time1
-    start_time2 = date_pipeline_helper.hour_ago(start_time1)
+    end_prev = start_now
+    start_prev = date_pipeline_helper.time_ago(end_prev, unit='hours', num=1)
 
-    print(start_time1, last_time_local)
-    print(start_time2, end_time2)
+    query_now = date_pipeline_helper.data_query_find_from_to(start_now, end_now)
+    query_prev = date_pipeline_helper.data_query_find_from_to(start_prev, end_prev)
 
-    pipeline = date_pipeline_helper.data_pipeline_from_to(start_time1, last_time_local)
-    pipeline2 = date_pipeline_helper.data_pipeline_from_to(start_time2, end_time2)
+    data_now = await log_repo.get_data_find(query_now)
+    data_prev = await log_repo.get_data_find(query_prev)
 
-    data1 = await log_repo.get_data(pipeline_custom=pipeline)
-    data2 = await log_repo.get_data(pipeline_custom=pipeline2)
+    result = await metrics_key.compute_key_metrics(data_now, data_prev)
+    return result
 
-    print(len(data1))
-    print(len(data2))
-    await key_metric.compute_key_metrics(docs_now=data1, docs_prev=data2)
-    # key_metrics = await key_metric.compute_key_metrics(docs_now=data1, docs_prev=data2)
+@router.get('/quick-stats')
+async def quick_stats_30min(log_repo: LogRepository = Depends(get_log_repo)):
+    pass

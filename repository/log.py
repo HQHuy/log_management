@@ -1,3 +1,5 @@
+from typing import Any, List
+
 from motor.motor_asyncio import AsyncIOMotorClient
 from .base import DatabaseRepository
 
@@ -28,4 +30,8 @@ class LogRepository(DatabaseRepository):
     
     async def get_data(self, pipeline_custom):
         data = await self.coll.aggregate(pipeline=pipeline_custom).to_list()
+        return data
+
+    async def get_data_find(self, query):
+        data = await self.coll.find(query).to_list()
         return data

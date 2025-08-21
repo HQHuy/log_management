@@ -1,10 +1,19 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 # def convert_timezon_to_utc(time: datetime):
 #     return time.astimezone(timezone.utc)
 
-def hour_ago(day: datetime):
-    return day - timedelta(hours=1)
+def time_ago(day: datetime, unit: str, num: int):
+    if unit == "days":
+        return day - timedelta(days=num)
+    elif unit == "hours":
+        return day - timedelta(hours=num)
+    elif unit == "minutes":
+        return day - timedelta(minutes=num)
+    elif unit == "seconds":
+        return day - timedelta(seconds=num)
+    else:
+        raise ValueError(f"Unsupported unit: {unit}")
 
 def one_day_time(day: datetime):
     start = day.replace(hour=0, minute=0, second=0, microsecond=000000)
@@ -30,4 +39,10 @@ def data_pipeline_from_to(start, end):
 
     return pipeline
 
-def data_
+def data_query_find_from_to(start, end):
+    return {
+        'timestamp': {
+            '$gte': start,
+            '$lt': end
+        }
+    }
