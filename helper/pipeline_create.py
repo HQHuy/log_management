@@ -27,19 +27,27 @@ def start_of_day(day: datetime):
 # def end_of_day(day: datetime):
 #     return day.replace(hour=23, minute=59, second=59,microsecond=999000)
 
-def data_pipeline_from_to(start, end):
+def data_pipeline_from_to(start: datetime, end: datetime, unit: str, binsize:int):
     pipeline = [
         { '$match': { 'timestamp': { '$gte': start, '$lt': end } } },
-        { '$group': {
-            '_id': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$timestamp', 'timezone': '+07:00' }},
-            'docs': {'$push': { '_id': { '$toString': '$_id'}, 'message': '$message', 'severity': '$severity', 'timestamp': '$timestamp' }}
-        } },
+        { '$group': 
+            {
+            '_id': {
+                    '$dateTrunc': {
+                        'date': '$timestamp',
+                        'unit': unit,
+                        'binSize': binsize,
+                        'timezone': '+07:00'
+                        }
+                    }
+            } 
+        },
         { '$sort': {'_id': -1} }
     ]
 
     return pipeline
 
-def data_query_find_from_to(start, end):
+def data_query_find_from_to(start: datetime, end: datetime):
     return {
         'timestamp': {
             '$gte': start,

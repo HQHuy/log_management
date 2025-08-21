@@ -9,10 +9,11 @@ from repository.log import LogRepository
 import helper.check_exist_file as file_helper
 import helper.pipeline_create as date_pipeline_helper
 import helper.save_log_file as save_log
-TIME_DEMO = datetime(2025, 5, 14,  8, 59, 59, tzinfo=timezone.utc)
+TIME_DEMO = datetime(2025, 5, 12,  9, 29, 59, tzinfo=timezone.utc)
 
 from services import sys_sta
 from services import key_metric as metrics_key
+from services import quick_stats_30m
 
 router = APIRouter()
 dates_lst: List[str] = []
@@ -46,7 +47,7 @@ async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
         date = datetime.strptime(missing_dates[0], format_date)
         start, end = date_pipeline_helper.one_day_time(date)
 
-        pipeline = date_pipeline_helper.data_pipeline_from_to(start, end)
+        pipeline = date_pipeline_helper.data_pipeline_from_to(start, end, unit='day', binsize=1)
 
         data = await log_repo.get_data(pipeline_custom=pipeline)
         
@@ -56,7 +57,7 @@ async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
         start_date = datetime.strptime(missing_dates[-1], format_date)
         end_date = datetime.strptime(missing_dates[0], format_date)
 
-        pipeline = date_pipeline_helper.data_pipeline_from_to(start_date, end_date)
+        pipeline = date_pipeline_helper.data_pipeline_from_to(start_date, end_date, unit='day', binsize=1)
 
         data = await log_repo.get_data(pipeline_custom=pipeline)
 
@@ -99,4 +100,13 @@ async def key_metrics(log_repo: LogRepository = Depends(get_log_repo)):
 
 @router.get('/quick-stats')
 async def quick_stats_30min(log_repo: LogRepository = Depends(get_log_repo)):
-    pass
+    end = TIME_DEMO.astimezone(timezone(timedelta(hours=7)))
+    start = date_pipeline_helper.time_ago(end, unit='minutes', num=30)
+
+    query = date_pipeline_helper.data_query_find_from_to(start, end)
+
+    data = await log_repo.get_data_find(query)
+
+    result = await quick_stats_30m.compute_quick_stats(data)
+
+    return result

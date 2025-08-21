@@ -86,7 +86,7 @@ async def compute_system_status(docs):
             doc['label'] = label
             doc['data'] = data
 
-    print(docs[0])
+    # print(docs[0])
 
     now_utc = datetime.now()
     status = _latest_startup_shutdown_from_docs(docs)
