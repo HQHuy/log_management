@@ -43,7 +43,7 @@ def _group_requests_errors(docs: List[Dict]):
         #     url = url[1:-1]
 
         status = _as_int(data.get("status_code"))
-        logger.info(f'API Loi: {url}:{status}')
+        # logger.info(f'API Loi: {url}:{status}')
         key = (url, status) # Ví dụ: ("http://abc.com", 404) khác với ("http://abc.com", "505").
 
         bucket = buckets.get(key)
@@ -81,7 +81,7 @@ def _sys_error(docs: List[Dict]):
             if not buckets[key]["last_at"] or iso > buckets[key]["last_at"]:
                 buckets[key]["last_at"] = iso
         total += 1
-    print(total, list(buckets.values()))
+    # print(total, list(buckets.values()))
     return total, list(buckets.values())
 
 def _slow_query(docs: List[Dict]):
@@ -104,11 +104,16 @@ def _slow_query(docs: List[Dict]):
         else: 
             if buckets[key]['run_time'] < dur_i:
                 buckets[key]['run_time'] = dur_i 
+    # print(f'bucket: {buckets}')
+    if not buckets:
+        return "", 0
+    elif len(buckets) == 1:
+        key, value = next(iter(buckets.items()))
+        return key, value
+    else:
+        max_item = max(buckets.items(), key=lambda kv: kv[1]['run_time'])
 
-    max_item = max(buckets.items(), key=lambda kv: kv[1]['run_time'])
-    # print(buckets)
-    # print(max_item)
-    return max_item[0], max_item[1].get('run_time')
+        return max_item[0], max_item[1].get('run_time')
 
 def _perform_warn(docs: List[Dict]):
     total = 0

@@ -1,15 +1,17 @@
 from fastapi import APIRouter, Depends, Query
-from typing import List, Any
+from typing import List, Literal
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from loguru import logger
+# from icecream import ic
 
 from core.dependencies import ( get_log_repo )
 from repository.log import LogRepository
 import helper.check_exist_file as file_helper
 import helper.pipeline_create as date_pipeline_helper
 import helper.save_log_file as save_log
-TIME_DEMO = datetime(2025, 5, 12,  16, 59, 59, tzinfo=timezone.utc)
+import helper.timeline_helper as tl_help
+TIME_DEMO = datetime(2025, 5, 17,  3, 59, 59, tzinfo=timezone.utc)
 
 from services import sys_sta
 from services import key_metric as metrics_key
@@ -22,12 +24,12 @@ dates_lst: List[str] = []
 async def collect_date(log_repo: LogRepository = Depends(get_log_repo)):
     
     result = await log_repo.get_date_from_db()
-    dates_lst = result
+    # dates_lst = result
     return result
 
 @router.get('/download/data-by-date')
 async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
-    dates_exist = dates_lst
+    dates_exist = await log_repo.get_date_from_db()
     missing_dates = file_helper.missing_dates(dates_exist)
     # data_lst: List[Any] = []
     format_date = '%Y-%m-%d'
@@ -47,22 +49,22 @@ async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
         date = datetime.strptime(missing_dates[0], format_date)
         start, end = date_pipeline_helper.one_day_time(date)
 
-        pipeline = date_pipeline_helper.data_pipeline_from_to(start, end, unit='day', binsize=1)
+        pipeline = date_pipeline_helper.data_pipeline_from_to(start, end)
 
         data = await log_repo.get_data(pipeline_custom=pipeline)
         
-        # data_lst.append(data)
+
         
     else:
         start_date = datetime.strptime(missing_dates[-1], format_date)
         end_date = datetime.strptime(missing_dates[0], format_date)
 
-        pipeline = date_pipeline_helper.data_pipeline_from_to(start_date, end_date, unit='day', binsize=1)
+        pipeline = date_pipeline_helper.data_pipeline_from_to(start_date, end_date)
 
         data = await log_repo.get_data(pipeline_custom=pipeline)
 
-        # data_lst.append(data)
-    # print(len(data))
+    print(data[0])
+    print(len(data))
     save_log.export_log(data)
     return True
 
@@ -129,35 +131,46 @@ async def top_log_type(log_repo: LogRepository = Depends(get_log_repo)):
     # pipeline = date_pipeline_helper.data_pipeline_from_to(start, end, unit='day', binsize=1)
     data = await log_repo.get_data(pipeline_custom=pipeline)
 
-    print(data)
+    # print(data)
     return data
 
-@router.get('/time-line')
+@router.get('/timeline')
 async def time_line(log_repo: LogRepository = Depends(get_log_repo),
-                    windown: str = Query(default='24h'),
-                    bucket: str = Query(default='1h')):
-    day = TIME_DEMO.astimezone(timezone(timedelta(hours=7)))
-    start, end = date_pipeline_helper.one_day_time(day)
-    print(start, end)
+                    window: Literal['1h', '6h', 'now', '7d'] = Query(default='now')):
+    unit = 'hour'
+    binsize = 1
+    start = end = None
+    bucket_for_fe = None  
 
-#     pipeline = [
-#     { '$match': { 'timestamp': { '$gte': start, '$lt': end } } },
-#     { '$group': {
-#         '_id': {
-#             'bucket': {
-#                 '$dateTrunc': {
-#                     'date': '$timestamp',
-#                     'unit': 'minute',
-#                     'binSize': 30,
-#                     'timezone': '+07:00'
-#                 }
-#             },
-#             'severity': '$severity'
-#         },
-#         'count': { '$sum': 1 }
-#     }},
-#     { '$sort': {'_id.bucket': -1, '_id.severity': 1} }
-# ]
+    if window == '1h':
+        unit = 'minute'; binsize = 5; bucket_for_fe = 5
+        end_aligned = tl_help.align_min_floor(TIME_DEMO, binsize)
+        start = end_aligned - timedelta(hours=1)
+        end = end_aligned + timedelta(minutes=binsize)  
+    elif window == '6h':
+        unit = 'minute'; binsize = 30; bucket_for_fe = 30
+        end_aligned = tl_help.align_min_floor(TIME_DEMO, binsize)
+        start = end_aligned - timedelta(hours=6)
+        end = end_aligned + timedelta(minutes=binsize)  
+    elif window == 'now':
+        unit = 'hour'; binsize = 1; bucket_for_fe = 1
+        start = tl_help.start_of_day(TIME_DEMO)
+        end = start + timedelta(days=1)  
+    elif window == '7d':
+        unit = 'day'; binsize = 1; bucket_for_fe = 1
+        today0 = tl_help.start_of_day(TIME_DEMO)
+        start = today0 - timedelta(days=6)
+        end = today0 + timedelta(days=1) 
 
-#     data = await log_repo.get_data(pipeline_custom=pipeline)
-#     print(data)
+    pipeline = date_pipeline_helper.data_pipeline_for_chart(
+        start, end, unit=unit, binsize=binsize
+    )
+    data = await log_repo.get_data(pipeline_custom=pipeline)
+
+    return {
+        "window": window,
+        "bucket": bucket_for_fe,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "items": data, 
+    }

@@ -20,6 +20,7 @@ def file_already():
 def missing_dates(dates):
     miss_dates: List[str] = []
     exist_dates = file_already()
+    # print(exist_dates)
     
     if dates is None or dates == []:
         return None

@@ -27,25 +27,14 @@ def start_of_day(day: datetime):
 # def end_of_day(day: datetime):
 #     return day.replace(hour=23, minute=59, second=59,microsecond=999000)
 
-def data_pipeline_from_to(start: datetime, end: datetime, unit: str, binsize:int):
+def data_pipeline_from_to(start: datetime, end: datetime):
     pipeline = [
         { '$match': { 'timestamp': { '$gte': start, '$lt': end } } },
-        { '$group': 
-            {
-            '_id': {
-                    '$dateTrunc': {
-                        'date': '$timestamp',
-                        'unit': unit,
-                        'binSize': binsize,
-                        'timezone': '+07:00'
-                        },
-                    '_id': '$severity',
-                    'count': { '$sum': 1 }
-                    }
-            } 
-        },
-        { '$sort': {'_id': -1} },
-        { '$count': '$severity'}
+        { '$group': {
+            '_id': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$timestamp', 'timezone': '+07:00' }},
+            'docs': {'$push': { '_id': { '$toString': '$_id'}, 'message': '$message', 'severity': '$severity', 'timestamp': '$timestamp' }}
+        } },
+        { '$sort': {'_id': -1} }
     ]
 
     return pipeline
@@ -57,3 +46,23 @@ def data_query_find_from_to(start: datetime, end: datetime):
             '$lt': end
         }
     }
+
+def data_pipeline_for_chart(start: datetime, end: datetime, unit: str, binsize:int):
+    pipeline = [
+        { '$match': { 'timestamp': { '$gte': start, '$lt': end } } },
+        { '$group': {
+            '_id': {
+                'severity': '$severity',
+                'period': {
+                    '$dateTrunc': {
+                        'date': '$timestamp',
+                        'unit': unit,
+                        'binSize': binsize,
+                        'timezone': 'Asia/Ho_Chi_Minh',
+                    }
+                }
+            },
+            'count': { '$sum': 1 }
+        } }
+    ]
+    return pipeline

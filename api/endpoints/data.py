@@ -55,9 +55,9 @@ async def upload(file: UploadFile = File(...), analyze: int = Query(0)):
 
 
 @router.get("/analyze")
-def analyze(date: str = Query(..., description="Ngày cần phân tích")):
+def analyze(date: str = Query(..., description="Date for analyze")):
     f = find_file_for_date(date)
     if not f:
-        return { "ok": False, "error": f"Không tìm thấy file cho ngày {date}" }
+        return { "ok": False, "error": f"Not fond file for date: {date}" }
     df = analyzer.load_data(f)
     return { "ok": True, "analysis": analyzer.analyze_df(df) }
