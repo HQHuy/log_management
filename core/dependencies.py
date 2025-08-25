@@ -1,6 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import Depends, Request
-from typing import List
 from loguru import logger
 
 from repository.log import LogRepository

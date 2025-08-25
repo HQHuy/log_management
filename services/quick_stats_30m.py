@@ -1,5 +1,5 @@
 from .log_label import get_label_log
-from helper.calculate_func import _as_int, _avg_response_time_ms_from_docs
+from helper.calculate_func import _as_int
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from loguru import logger

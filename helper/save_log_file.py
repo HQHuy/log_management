@@ -2,7 +2,7 @@ import os
 from openpyxl import Workbook
 from loguru import logger
 
-from services import clean_message, log_label
+from services import log_label
 
 def export_log(datas):
     os.makedirs('output', exist_ok=True)

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, UploadFile, File, Query
-from fastapi.responses import JSONResponse
 from typing import Dict, Any
 import os
 from pathlib import Path
