@@ -14,5 +14,7 @@ class Settings(BaseSettings):
     DATABASE_NAME: ClassVar[str] = os.getenv('DB_NAME', '')
     COLLECTION_NAME: ClassVar[str] = os.getenv('COLLECTION_NAME', '')
     LOGGING_CONFIG_FILE: ClassVar[str] = os.path.join(BASE_DIR, 'logging.ini')
+    OUTPUT_BASE_DIR: ClassVar[str] = os.path.join(BASE_DIR, 'output')
+    UPLOAD_BASE_DIR: ClassVar[str] = os.path.join(BASE_DIR, 'upload')
 
 settings = Settings()

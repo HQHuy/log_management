@@ -38,11 +38,14 @@ def data_pipeline_from_to(start: datetime, end: datetime, unit: str, binsize:int
                         'unit': unit,
                         'binSize': binsize,
                         'timezone': '+07:00'
-                        }
+                        },
+                    '_id': '$severity',
+                    'count': { '$sum': 1 }
                     }
             } 
         },
-        { '$sort': {'_id': -1} }
+        { '$sort': {'_id': -1} },
+        { '$count': '$severity'}
     ]
 
     return pipeline

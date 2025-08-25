@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from typing import List, Any
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
@@ -9,7 +9,7 @@ from repository.log import LogRepository
 import helper.check_exist_file as file_helper
 import helper.pipeline_create as date_pipeline_helper
 import helper.save_log_file as save_log
-TIME_DEMO = datetime(2025, 5, 12,  9, 29, 59, tzinfo=timezone.utc)
+TIME_DEMO = datetime(2025, 5, 12,  16, 59, 59, tzinfo=timezone.utc)
 
 from services import sys_sta
 from services import key_metric as metrics_key
@@ -110,3 +110,54 @@ async def quick_stats_30min(log_repo: LogRepository = Depends(get_log_repo)):
     result = await quick_stats_30m.compute_quick_stats(data)
 
     return result
+
+@router.get('/log-type')
+async def top_log_type(log_repo: LogRepository = Depends(get_log_repo)):
+    end = TIME_DEMO.astimezone(timezone(timedelta(hours=7)))
+    start, end = date_pipeline_helper.one_day_time(end)
+    
+    pipeline = [
+        { '$match': { 'timestamp': { '$gte': start, '$lt': end } } },
+        { '$group': 
+            {
+            '_id': '$severity',
+            'count': { '$sum': 1 }
+            } 
+        },
+    ]
+
+    # pipeline = date_pipeline_helper.data_pipeline_from_to(start, end, unit='day', binsize=1)
+    data = await log_repo.get_data(pipeline_custom=pipeline)
+
+    print(data)
+    return data
+
+@router.get('/time-line')
+async def time_line(log_repo: LogRepository = Depends(get_log_repo),
+                    windown: str = Query(default='24h'),
+                    bucket: str = Query(default='1h')):
+    day = TIME_DEMO.astimezone(timezone(timedelta(hours=7)))
+    start, end = date_pipeline_helper.one_day_time(day)
+    print(start, end)
+
+#     pipeline = [
+#     { '$match': { 'timestamp': { '$gte': start, '$lt': end } } },
+#     { '$group': {
+#         '_id': {
+#             'bucket': {
+#                 '$dateTrunc': {
+#                     'date': '$timestamp',
+#                     'unit': 'minute',
+#                     'binSize': 30,
+#                     'timezone': '+07:00'
+#                 }
+#             },
+#             'severity': '$severity'
+#         },
+#         'count': { '$sum': 1 }
+#     }},
+#     { '$sort': {'_id.bucket': -1, '_id.severity': 1} }
+# ]
+
+#     data = await log_repo.get_data(pipeline_custom=pipeline)
+#     print(data)
