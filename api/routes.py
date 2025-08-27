@@ -5,6 +5,7 @@ from loguru import logger
 
 from .endpoints import dashboard as dashboard_rou
 from .endpoints import data as data_rou
+from .endpoints import update as update_rou
 
 router = APIRouter()
 
@@ -29,3 +30,4 @@ def health_check():
     
 router.include_router(dashboard_rou.router, tags=['dashboard'], prefix='/dashboard')
 router.include_router(data_rou.router, tags=['data'], prefix='/data')
+router.include_router(update_rou.router, tags=['update'], prefix='/update')

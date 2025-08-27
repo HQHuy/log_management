@@ -122,7 +122,7 @@ def build_mini(df: pd.DataFrame) -> Dict[str, Any]:
 
     status_code = pd.Series(status_code)
 
-    http_err = ((sev_lower == "error") & pd.Series(is_http)) | (status_code.fillna(0) >= 400)
+    http_err = ((sev_lower == "error") & pd.Series(is_http)) |  (status_code.infer_objects().fillna(0) >= 400)
     requests_err = int(http_err.sum())
 
     system_err = int(((sev_lower == "error") & (~http_err)).sum())

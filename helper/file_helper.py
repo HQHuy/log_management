@@ -19,6 +19,7 @@ def extract_date_from_filename(folder_path):
                 match = re.search(pattern, filename)
                 if match:
                     dates.append(match.group(0))
+            else: continue
         
         if dates:
             return dates  

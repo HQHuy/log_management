@@ -21,7 +21,7 @@ dates_lst: List[str] = []
 
 @router.get('/data-collection/date')
 async def collect_date(log_repo: LogRepository = Depends(get_log_repo)):
-    
+    await download_data(log_repo)
     result = await log_repo.get_date_from_db()
     # dates_lst = result
     return result
