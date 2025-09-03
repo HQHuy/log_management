@@ -209,3 +209,5 @@ __marimo__/
 # Test 
 output/
 upload/
+backup/
+test.csv

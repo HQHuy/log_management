@@ -39,12 +39,13 @@ async def coverse_data(file: UploadFile = File(...)):
 
     try:
         if name.endswith('.xlsx') or name.endswith('.xls'):
-            df = pd.read_excel(BytesIO(content))  
+            df = pd.read_excel(BytesIO(content), index_col=None)  
         else:
             try:
-                df = pd.read_csv(BytesIO(content))
+                df = pd.read_csv(BytesIO(content), index_col=None)
             except Exception:
-                df = pd.read_csv(BytesIO(content), encoding='latin1')
+                df = pd.read_csv(BytesIO(content), encoding='latin1', index_col=None)
+
 
         required = {"severity", "label"}
 

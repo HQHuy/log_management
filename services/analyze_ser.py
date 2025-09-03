@@ -262,7 +262,7 @@ def build_logs(df: pd.DataFrame, limit: int = 2000) -> List[Dict[str, Any]]:
             "timestamp": ts,
             "label": str(row.get("label") or ""),
             "severity": str(row.get("severity") or ""),
-            "message": str(row.get("message") or ""),
+            # "message": str(row.get("message") or ""),
             "data_extracted": data_val if data_val is not None else None
         })
     return out

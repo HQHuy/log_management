@@ -26,6 +26,7 @@ def normalize_data_extracted(df) -> pd.DataFrame | None:
         # df = _get_data(path_to_file)
         df['timestamp'] = df['timestamp'].apply(_to_iso8601)
         df["data_extracted"] = df["data_extracted"].apply(ast.literal_eval)
+        df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
         return df
     except Exception:
         pass

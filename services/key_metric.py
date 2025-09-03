@@ -20,12 +20,7 @@ HTTP_EVENTS = {
 DATABASES_QUERY = {'DATABASE_QUERY'}
 
 def total_logs_from_docs(docs: List[Dict[str, Any]]) -> int:
-    total = 0
-
-    for doc in docs:
-        total += 1
-
-    return total
+    return len(docs)
 
 def auth_failures_count_from_docs(docs: List[Dict[str, Any]]) -> int:
     count = 0

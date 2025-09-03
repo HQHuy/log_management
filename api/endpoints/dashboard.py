@@ -10,14 +10,13 @@ import helper.check_exist_file as file_helper
 import helper.pipeline_create as date_pipeline_helper
 import helper.save_log_file as save_log
 import helper.timeline_helper as tl_help
-TIME_DEMO = datetime(2025, 5, 17,  3, 59, 59, tzinfo=timezone.utc)
+TIME_DEMO = datetime(2025, 5, 17,  4, 59, 59, tzinfo=timezone.utc)
 
 from services import sys_sta
 from services import key_metric as metrics_key
 from services import quick_stats_30m
 
 router = APIRouter()
-dates_lst: List[str] = []
 
 @router.get('/data-collection/date')
 async def collect_date(log_repo: LogRepository = Depends(get_log_repo)):
@@ -36,7 +35,11 @@ async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
     # print(missing_dates)
 
     if missing_dates is None or len(missing_dates) == 0:
-        return None
+        return {
+            "ok": False,
+            "rows": 0,
+            "message": "No new data to update"
+        }
     
     # if (datetime.strptime(day, format_date) == datetime.today().date() for day in missing_dates):
     #     missing_dates.remove(str(datetime.today().date()))
@@ -65,7 +68,11 @@ async def download_data(log_repo: LogRepository = Depends(get_log_repo)):
     print(data[0])
     print(len(data))
     save_log.export_log(data)
-    return True
+    return {
+        "ok": True,
+        "rows": len(data),
+        "message": "Data updated successfully" if data else "No data found"
+    }
 
 @router.get('/system-status')
 async def system_status(log_repo: LogRepository = Depends(get_log_repo)):
